@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube to MP3 Downloader</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff4d4d">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎧 YouTube to MP3 Downloader</h1>
+    <p>Konversi video favoritmu jadi MP3 dengan mudah</p>
+    <form id="downloadForm">
+      <input type="text" id="youtubeUrl" placeholder="Masukkan URL YouTube..." required />
+      <button type="submit">🎵 Download MP3</button>
+    </form>
+    <p id="statusText"></p>
+
+    <h3>Riwayat Unduhan</h3>
+    <ul id="historyList"></ul>
+    <hr />
+    <button id="installBtn" style="display:none;">📲 Install Aplikasi</button>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(choice => {
+          if (choice.outcome === 'accepted') {
+            console.log('✅ Aplikasi diinstal');
+          }
+          deferredPrompt = null;
+        });
+      }
+    });
+
+    const form = document.getElementById('downloadForm');
+    const input = document.getElementById('youtubeUrl');
+    const statusText = document.getElementById('statusText');
+    const historyList = document.getElementById('historyList');
+
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('downloadHistory')) || [];
+      historyList.innerHTML = '';
+      history.forEach(url => {
+        const li = document.createElement('li');
+        li.textContent = url;
+        historyList.appendChild(li);
+      });
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const url = input.value.trim();
+      if (!url) return;
+
+      statusText.innerText = "Sedang memproses... (simulasi)";
+      setTimeout(() => {
+        statusText.innerText = `Berhasil diproses: ${url}`;
+        let history = JSON.parse(localStorage.getItem('downloadHistory')) || [];
+        history.unshift(url);
+        history = history.slice(0, 10);
+        localStorage.setItem('downloadHistory', JSON.stringify(history));
+        loadHistory();
+        input.value = '';
+      }, 1000);
+    });
+
+    loadHistory();
+  </script>
+</body>
+</html>
