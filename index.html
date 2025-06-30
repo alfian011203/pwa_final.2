@@ -1,60 +1,83 @@
-<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>YouTube to MP3 Downloader</title>
+
+  <!-- Menghubungkan manifest agar bisa jadi PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ff4d4d">
+
+  <!-- Gaya tampilan -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>🎧 YouTube to MP3 Downloader</h1>
+    <h1>🎿 YouTube to MP3 Downloader</h1>
     <p>Konversi video favoritmu jadi MP3 dengan mudah</p>
+
+    <!-- Form input untuk memasukkan URL YouTube -->
     <form id="downloadForm">
       <input type="text" id="youtubeUrl" placeholder="Masukkan URL YouTube..." required />
       <button type="submit">🎵 Download MP3</button>
     </form>
+
+    <!-- Menampilkan status setelah klik tombol -->
     <p id="statusText"></p>
 
+    <!-- Daftar riwayat URL yang pernah diunduh -->
     <h3>Riwayat Unduhan</h3>
     <ul id="historyList"></ul>
+
+    <!-- Tombol untuk menghapus semua riwayat -->
+    <button id="clearHistoryBtn">🗑️ Hapus Riwayat</button>
+
     <hr />
-    <button id="installBtn" style="display:none;">📲 Install Aplikasi</button>
+
+    <!-- Tombol install PWA (disembunyikan awalnya) -->
+    <button id="installBtn" style="display:none;">📢 Install Aplikasi</button>
   </div>
 
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
-    }
-
+    // Menyimpan event sebeluminstallprompt agar bisa dipanggil saat user klik install
     let deferredPrompt;
     const installBtn = document.getElementById('installBtn');
 
+    // Menangkap event install PWA saat memenuhi syarat
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
       installBtn.style.display = 'block';
     });
 
+    // Saat tombol install diklik
     installBtn.addEventListener('click', () => {
       if (deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then(choice => {
           if (choice.outcome === 'accepted') {
-            console.log('✅ Aplikasi diinstal');
+            console.log("✅ Aplikasi diinstal");
           }
           deferredPrompt = null;
         });
       }
     });
 
+    // Mendaftarkan service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log("✅ Service Worker aktif"))
+        .catch(err => console.log("❌ Gagal registrasi SW:", err));
+    }
+
+    // Elemen-elemen DOM
     const form = document.getElementById('downloadForm');
     const input = document.getElementById('youtubeUrl');
     const statusText = document.getElementById('statusText');
     const historyList = document.getElementById('historyList');
+    const clearBtn = document.getElementById('clearHistoryBtn');
 
+    // Menampilkan riwayat unduhan dari localStorage
     function loadHistory() {
       const history = JSON.parse(localStorage.getItem('downloadHistory')) || [];
       historyList.innerHTML = '';
@@ -65,23 +88,32 @@
       });
     }
 
+    // Menangani event submit pada form
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       const url = input.value.trim();
       if (!url) return;
-
       statusText.innerText = "Sedang memproses... (simulasi)";
+
+      // Simulasi delay konversi
       setTimeout(() => {
         statusText.innerText = `Berhasil diproses: ${url}`;
         let history = JSON.parse(localStorage.getItem('downloadHistory')) || [];
         history.unshift(url);
-        history = history.slice(0, 10);
+        history = history.slice(0, 10); // Maksimum 10 riwayat
         localStorage.setItem('downloadHistory', JSON.stringify(history));
         loadHistory();
         input.value = '';
       }, 1000);
     });
 
+    // Hapus semua riwayat
+    clearBtn.addEventListener('click', () => {
+      localStorage.removeItem('downloadHistory');
+      loadHistory();
+    });
+
+    // Tampilkan riwayat saat halaman dimuat
     loadHistory();
   </script>
 </body>
